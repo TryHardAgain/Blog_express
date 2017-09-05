@@ -141,14 +141,29 @@ app.post('/api/SaveArticle',(req,res)=>{
 app.get('/api/GetArticleList',(req,res)=>{
     let limit=Number(req.query.limit) || 1;
     let start=Number(req.query.skip) || 1;
-    db.Article.count().then((count)=>{
-        return db.Article.find().skip((start-1)*limit).sort({date:-1}).limit(limit).exec((err,data)=>{
-            res.json({state:1,'articles':data,'total':count})
+    let NavTypes=String(req.query.NavTypes)
+    // db.Article.count().then((count)=>{
+    //     return db.Article.find({title:'Hello'}).skip((start-1)*limit).sort({date:-1}).limit(limit).exec((err,data)=>{
+    //         res.json({state:1,'articles':data,'total':count})
+    //     })
+    // })
+    // .catch((error)=>{
+    //     res.json({state:0,msg:error})
+    // })
+    if(NavTypes===''){
+        db.Article.count().then((count)=>{
+            return db.Article.find().skip((start-1)*limit).sort({date:-1}).limit(limit).exec((err,data)=>{
+                res.json({state:1,'articles':data,'total':count})
+            })
         })
-    })
-    .catch((error)=>{
-        res.json({state:0,msg:error})
-    })
+    }else{
+        db.Article.find({types:NavTypes}).skip((start-1)*limit).sort({date:-1}).limit(limit).exec((err,data)=>{
+        }).then((data)=>{
+            db.Article.find({types:NavTypes}).count().then(count=>{
+                res.json({state:1,'articles':data,'total':count})
+            })
+        })
+    }
 })
 
 app.delete('/api/RemoveArticle',(req,res)=>{
@@ -239,6 +254,17 @@ app.put('/api/UpdateNavList',(req,res)=>{
             res.json({state:0,msg:err})
         }else{
             res.json({state:1,msg:'导航更新成功！'})
+        }
+    })
+})
+
+app.get('/api/Detaile/:id',(req,res)=>{
+    let id =req.params.id;
+    db.Article.findOne({'_id':id}).exec((err,data)=>{
+        if(err){
+            res.json({state:0,msg:err})
+        }else{
+            res.json({state:1,'article':data})
         }
     })
 })
